@@ -123,3 +123,129 @@ If we click "Approve", it should take up to the callback page, where we get a to
 ![Screenshot from 2021-08-30 11-07-39](https://user-images.githubusercontent.com/5259968/131275585-a127a9f6-35ac-4003-adfd-6e52048e1232.png)
 
 And we get a token that will expire in a few minutes. 
+
+## Explanation
+
+Two points to draw attention to are how we get to the OAuth accept screen, and what
+to do after the user has chosen an action.
+
+```
+(function () {
+
+    'use strict'
+
+    const state = Date.now();
+    const url = [
+        'https://www.chatwork.com/packages/oauth2/login.php',
+        '?response_type=code',
+        '&redirect_uri=https://cw.wsdlab.com/oauth/chatwork',
+        '&client_id=0D43MyaOxMyO6',
+        '&scope=users.all:read rooms.info:read rooms.files:read rooms.files:write',
+        `&state=${state}`
+    ].join('');
+
+    const cw_oauth = document.getElementById('cw_oauth');
+    cw_oauth.setAttribute('href', url);
+
+    feather.replace({ 'aria-hidden': 'true' })
+
+})();
+```
+
+In ```public/js/oauth.js``` is where we create the link to the Chatwork confirmation
+page. The link to the page is ```https://www.chatwork.com/packages/oauth2/login.php```
+and we provide several GET query parameters to pass to the page.
+
+The _response_type_ is code, meaning that Chatwork creates a code, and we return it
+back to them to confirm that we received it. The _redirect_uri_ is where we want our
+application to handle the response from the confirmation screen. The _client_id_ lets 
+Chatwork know specifically which application to get approval for. The _state_ is a 
+session id, or some other one time value to differentiate which user and which 
+session the confirmation attempt is being made for. And _scope_ tells the confirmation
+screen which permissions we want the user to allow us to use.
+
+
+```
+const express = require('express')
+const fetch = require('node-fetch')
+const dotenv = require('dotenv')
+
+dotenv.config();
+
+const app = express()
+const port = 4000
+app.use(express.static('public'))
+
+app.get('/oauth/chatwork', async function(req, res) {
+
+    // Create the Authentication body
+
+    const body = [ 
+        'grant_type=authorization_code',
+        `code=${req.query.code}`,
+        'redirect_uri=https://cw.wsdlab.com/oauth/chatwork'
+    ].join('&');
+
+    // Create Authentication Header
+
+    const basic =  `${process.env.CLIENT_ID}:${process.env.CLIENT_SECRET}`;
+    const base64 = Buffer.from( basic ).toString( 'base64' );
+
+    const url = 'https://oauth.chatwork.com/token';
+    const params = {
+        method : 'POST',
+        headers : {
+            'Authorization' : `Basic ${base64}`,
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body : body
+    }
+
+    // Send Authentication Response
+
+    const ajax = await fetch( url, params );
+    const json = await ajax.json();
+    res.json( json );
+
+});
+
+app.listen(port, () => {
+    console.log(`Example app listening at port: ${port}`)
+});
+```
+
+Once the client either clicks "Allow" or "Deny" on the confirmation screen they
+are redirected to the url we specified in GTE query parameters for the
+confirmation screen. In this case since we're using Express, I used a path
+without an extension and doesn't respresent a folder to designate that callback
+is being executed as a server-side process as opposed to a page that is displayed
+to the user.
+
+Admittedly this callback doesn't handle the possibility of getting a "Deny" reply.
+In reality, we should be checking the response and replying accordiningly. In this case
+we wanted to focus on how we accept the token on the condition the user clicks
+on "Allow". And we see that in the body which provides three values.
+
+The two values that are passed to us as GET query parameters, is the state value we provided
+and a code value. The first value we reply with is _grant_type_, which has a fixed value of 
+"authorization_code". For the _code_ we supply the GET query parameter that was sent to us.
+And last is the _redirect_uri_, which shouldn't be needed as is not required as we're already
+done with that part, but I found if I didn't supply it, I got errors that the value didn't 
+match or something.
+
+From there we need to supply our secret to confirm to Chatwork OAuth, that it really is
+us, and not somebody else using our client ID. The way we do this is a twist on
+"Basic Authentication", which really just means authenticating with "username:password".
+For the username we supply the Client Id from our OAuth settings page, followed by a colon
+and the password is the Client Secret from our OAuth settings page. 
+
+We then take the string of "[Client_Id]:[Client_Secret]" and encode that as a base64
+string. We then need to supply that as a header. The header value is "Authorization", and
+the value is the string "Basic" followed by a space and the base64 string of our
+client id and client secret. The content type is ```application/x-www-form-urlencoded```,
+and the body is our form-urlencoded list of arguments made in the body.
+
+We send this to Chatwork to get a token as a response. And that allows us to send 
+API requests on behalf of the user, but we still have some questions to fill in
+from here. How do we renew a token? How do we get a token on login? And how do we
+structure our app to recognize the token exists to act accordining?
