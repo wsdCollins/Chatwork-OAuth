@@ -4,7 +4,10 @@
   "description": "A simple example for getting a token from Chatwork oauth",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon index.js --ignore 'sessions/*'",
+    "start": "pm2 start index.js --name Chatwork-Oauth",
+    "stop": "pm2 stop Chatwork-Oauth"
   },
   "repository": {
     "type": "git",
@@ -22,8 +25,13 @@
   },
   "homepage": "https://github.com/wsdCollins/Chatwork-OAuth#readme",
   "dependencies": {
+    "bcrypt": "^5.0.1",
     "dotenv": "^10.0.0",
     "express": "^4.17.1",
-    "node-fetch": "^2.6.1"
+    "express-session": "^1.17.2",
+    "node-fetch": "^2.6.1",
+    "session-file-store": "^1.5.0",
+    "sqlite3": "^5.0.2",
+    "uuid": "^8.3.2"
   }
 }
