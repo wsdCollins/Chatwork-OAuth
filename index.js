@@ -8,6 +8,7 @@ const dotenv = require('dotenv')
 const session = require('express-session')
 const uuidv1 = require('uuid').v1;
 const FileStore = require('session-file-store')(session);
+const FormData = require('form-data');
 
 // Self Defined import
 const db = require("./lib/database.js");
@@ -18,6 +19,7 @@ const db = require("./lib/database.js");
 
 dotenv.config();
 const app = express()
+app.use( express.json() )
 const port = 4000
 
 app.use(express.static('public'))
@@ -40,8 +42,6 @@ app.use(session({
  **/
 
 app.get('/oauth/chatwork', async function(req, res) {
-
-	console.log( req.query );
 
 	if( req.query.error ) {
 		return res.redirect('/dashboard.html?result=no');
@@ -120,7 +120,6 @@ app.get('/oauth/chatwork', async function(req, res) {
 
 	await db.query( insert_sql, insert_args );
 
-	console.log( json );
 	req.session.data.chatwork_oauth = json;
 	return res.redirect('/dashboard.html?result=yes');
 
@@ -248,8 +247,6 @@ app.post('/chatwork/info', async function(req, res) {
 	const ajax = await fetch( url, params );
 	const data = await ajax.json();
 	
-	console.log( data );
-
 	res.json({
 		err : 0,
 		msg : data
@@ -277,8 +274,6 @@ app.post('/chatwork/rooms', async function(req, res) {
 	const ajax = await fetch( url, params );
 	const data = await ajax.json();
 	
-	console.log( data );
-
 	res.json({
 		err : 0,
 		msg : data
@@ -355,8 +350,6 @@ app.post('/chatwork/downloadJSON', async function(req, res) {
 	ajax = await fetch( url, params );
 	const files = await ajax.json();
 
-	console.log( files );
-
 	const queue = files.filter( elem => {
 		return elem.filename.indexOf('.json') !== -1;
 	});
@@ -395,13 +388,64 @@ app.post('/chatwork/downloadJSON', async function(req, res) {
 
 });
 
+app.post('/chatwork/uploadJSON', async function(req, res) {
+
+	if(!req.session.data.chatwork_oauth) {
+		return res.json({
+			err : 1,
+			msg : "No chatwork token"
+		});
+	}
+	
+	// First we get account information
+
+	let url = "https://api.chatwork.com/v2/me";
+	const params = {
+		method : "GET",
+		headers : {
+			'Authorization' : `Bearer ${req.session.data.chatwork_oauth.access_token}`
+		}
+	}
+
+	let ajax = await fetch( url, params );
+	let data = await ajax.json();
+	const room_id = data.room_id;
+	const account_id = data.account_id;
+
+	// Then we create the request to upload the file
+	
+	const file = Buffer.from( req.body.content );
+
+	const form = new FormData();
+	form.append('file', file, {
+		contentType : 'application/json',
+		filename : req.body.name,
+		knownLength : file.length
+	});
+	
+	form.append('message', 'Message attached to file');
+	url = `https://api.chatwork.com/v2/rooms/${room_id}/files`;
+	params.method = "POST";
+	params.headers['Content-Type'] = form.getHeaders()['content-type'];
+	params.body = form;
+
+	ajax = await fetch( url, params );
+	data = await ajax.json();
+
+
+	res.json({
+		err : 0,
+		msg : data
+	});
+
+});
+
 /**
  * Internal Callbacks
  **/
 
 app.post('/login', async function(req, res) {
 
-	console.log( req.body );
 	const emailRegexp = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
 
 	if( !emailRegexp.test(req.body.email) ) {
@@ -432,7 +476,6 @@ app.post('/login', async function(req, res) {
 		const select_args = [ req.body.email ];
 
 		const user_data = await db.selectOne( select_user, select_args );
-		console.log( user_data );
 
 		// If no user data exists, then we create a user
 		if( !user_data ) {

@@ -202,13 +202,14 @@ const Dashboard = (function() {
 			const params = {
 				method : 'POST',
 				headers : {
-					'Content-Type' : 'applicaiton/json'
+					'Content-Type' : 'application/json'
 				},
 				body : JSON.stringify ( body )
 			}
 
 			const ajax = await fetch( url, params );
 			const data = await ajax.json();
+			this.DOM.chatwork.pre.textContent = JSON.stringify( data.msg, null, 4);
 
 		}
 
