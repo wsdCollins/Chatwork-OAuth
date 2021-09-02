@@ -12,7 +12,9 @@ const Dashboard = (function() {
 			getRooms : document.getElementById('Dashboard.chatwork.getRooms'),
 			getFiles : document.getElementById('Dashboard.chatwork.getFiles'),
 			downloadFile : document.getElementById('Dashboard.chatwork.downloadFile'),
-			uploadFile : document.getElementById('Dashboard.chatwork.uploadFile')
+			uploadFile : document.getElementById('Dashboard.chatwork.uploadFile'),
+			refreshToken : document.getElementById('Dashboard.chatwork.refreshToken'),
+			revokeAccess : document.getElementById('Dashboard.chatwork.revokeAccess')
 		}
 	}
 
@@ -21,7 +23,8 @@ const Dashboard = (function() {
 		handleGetRoomsClick : evt_handleGetRoomsClick.bind( this ),
 		handleGetFilesClick : evt_handleGetFilesClick.bind( this ),
 		handleDownloadClick : evt_handleDownloadClick.bind( this ),
-		handleUploadClick : evt_handleUploadClick.bind( this )
+		handleUploadClick : evt_handleUploadClick.bind( this ),
+		handleRefreshClick : evt_handleRefreshClick.bind( this )
 	}
 
 	this.API = {
@@ -38,6 +41,11 @@ const Dashboard = (function() {
 		this.API.getSessionData();
 
 		this.DOM.chatwork.getInfo.addEventListener('click', this.EVT.handleGetInfoClick);
+		this.DOM.chatwork.getRooms.addEventListener('click', this.EVT.handleGetRoomsClick);
+		this.DOM.chatwork.getFiles.addEventListener('click', this.EVT.handleGetFilesClick);
+		this.DOM.chatwork.downloadFile.addEventListener('click', this.EVT.handleDownloadClick);
+		
+		this.DOM.chatwork.refreshToken.addEventListener('click', this.EVT.handleRefreshClick);
 
 	}
 
@@ -67,6 +75,12 @@ const Dashboard = (function() {
 
 		this.DOM.oauth.chatwork.setAttribute('href', url);
 
+		if(this.MEM.session.chatwork_oauth) {
+			this.DOM.oauth.chatwork.setAttribute('class', 'w-100 btn btn-lg btn-primary disabled');
+			this.DOM.oauth.chatwork.setAttribute('disabled', 'disabled');
+			this.DOM.oauth.chatwork.textContent = "Connected";
+		}
+
 	}
 
 	async function evt_handleGetInfoClick() {
@@ -89,13 +103,70 @@ const Dashboard = (function() {
 
 	async function evt_handleGetRoomsClick() {
 
+		const url = "/chatwork/rooms";
+		const params = {
+			method : 'POST',
+			headers : {
+				'Content-Type' : 'applicaiton/json'
+			}
+		}
+
+		const ajax = await fetch( url, params );
+		const data = await ajax.json();
+		this.DOM.chatwork.pre.textContent = JSON.stringify( data.msg, null, 4);
+
 	}
 
 	async function evt_handleGetFilesClick() {
 
+		const url = "/chatwork/listFiles";
+		const params = {
+			method : 'POST',
+			headers : {
+				'Content-Type' : 'applicaiton/json'
+			}
+		}
+
+		const ajax = await fetch( url, params );
+		const data = await ajax.json();
+		this.DOM.chatwork.pre.textContent = JSON.stringify( data.msg, null, 4);
+
 	}
 
 	async function evt_handleDownloadClick() {
+
+		const url = "/chatwork/downloadJSON";
+		const params = {
+			method : 'POST',
+			headers : {
+				'Content-Type' : 'applicaiton/json'
+			}
+		}
+
+		const ajax = await fetch( url, params );
+		const data = await ajax.json();
+
+		if( !data.err ) {
+			this.DOM.chatwork.pre.textContent = JSON.stringify( data.msg, null, 4);
+		} else {
+			this.DOM.chatwork.pre.textContent = `INVALID JSON:\n${data.msg}`;
+		}
+
+	}
+
+	async function evt_handleRefreshClick() {
+
+		const url = "/chatwork/refresh";
+		const params = {
+			method : 'POST',
+			headers : {
+				'Content-Type' : 'applicaiton/json'
+			}
+		}
+
+		const ajax = await fetch( url, params );
+		const data = await ajax.json();
+		this.DOM.chatwork.pre.textContent = JSON.stringify( data.msg, null, 4);
 
 	}
 

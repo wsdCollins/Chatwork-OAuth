@@ -74,7 +74,6 @@ app.get('/oauth/chatwork', async function(req, res) {
 
 	const ajax = await fetch( url, params );
 	const json = await ajax.json();
-	req.session.data.chatwork = json;
 
 	const update_sql = `
 		UPDATE
@@ -122,7 +121,6 @@ app.get('/oauth/chatwork', async function(req, res) {
 	await db.query( insert_sql, insert_args );
 
 	console.log( json );
-
 	req.session.data.chatwork_oauth = json;
 	return res.redirect('/dashboard.html?result=yes');
 
@@ -145,6 +143,90 @@ app.get('/logout', async function(req, res) {
 /**
  * Chatwork Callbacks
  **/
+
+app.post('/chatwork/refresh', async function(req, res) {
+
+	if(!req.session.data.chatwork_oauth) {
+		return res.json({
+			err : 1,
+			msg : "No chatwork token"
+		});
+	}
+
+	// Create the Authentication body
+
+	const body = [ 
+		'grant_type=refresh_token',
+		`refresh_token=${req.session.data.chatwork_oauth.refresh_token}`,
+	].join('&');
+
+	// Create Authentication Header
+
+	const basic = `${process.env.CLIENT_ID}:${process.env.CLIENT_SECRET}`;
+	const base64 = Buffer.from( basic ).toString( 'base64' );
+
+	const url = 'https://oauth.chatwork.com/token';
+	const params = {
+		method : 'POST',
+		headers : {
+			'Authorization' : `Basic ${base64}`,
+			'Content-Type': 'application/x-www-form-urlencoded'
+		},
+		body : body
+	}
+
+	// Send Authentication Response
+
+	const ajax = await fetch( url, params );
+	const json = await ajax.json();
+	req.session.data.chatwork_oauth = json;
+
+	const update_sql = `
+		UPDATE
+			dat_users
+		SET
+			chatwork_oauth = ?
+		WHERE
+			user_uuid = ?
+	`;
+
+	const update_args = [
+		JSON.stringify( json ),
+		req.session.data.user_uuid
+	]
+
+	await db.query( update_sql, update_args );
+
+	const insert_sql = `
+		INSERT INTO dat_log_token (
+			user_email,
+			access_token,
+			token_type,
+			expires_in,
+			refresh_token,
+			scope
+		) VALUES ( 
+			?,
+			?,
+			?,
+			?,
+			?,
+			?
+		)
+	`;
+
+	const insert_args = [
+		req.session.data.user_email,
+		json.access_token,
+		json.token_type,
+		json.expires_in,
+		json.refresh_token,
+		json.scope
+	];
+
+	await db.query( insert_sql, insert_args );
+	
+});
 
 app.post('/chatwork/info', async function(req, res) {
 
@@ -170,6 +252,144 @@ app.post('/chatwork/info', async function(req, res) {
 
 	res.json({
 		err : 0,
+		msg : data
+	});
+
+});
+
+app.post('/chatwork/rooms', async function(req, res) {
+
+	if(!req.session.data.chatwork_oauth) {
+		return res.json({
+			err : 1,
+			msg : "No chatwork token"
+		});
+	}
+	
+	const url = "https://api.chatwork.com/v2/rooms";
+	const params = {
+		method : "GET",
+		headers : {
+			'Authorization' : `Bearer ${req.session.data.chatwork_oauth.access_token}`
+		}
+	}
+
+	const ajax = await fetch( url, params );
+	const data = await ajax.json();
+	
+	console.log( data );
+
+	res.json({
+		err : 0,
+		msg : data
+	});
+
+});
+
+app.post('/chatwork/listFiles', async function(req, res) {
+
+	if(!req.session.data.chatwork_oauth) {
+		return res.json({
+			err : 1,
+			msg : "No chatwork token"
+		});
+	}
+	
+	// First we get account information
+
+	let url = "https://api.chatwork.com/v2/me";
+	const params = {
+		method : "GET",
+		headers : {
+			'Authorization' : `Bearer ${req.session.data.chatwork_oauth.access_token}`
+		}
+	}
+
+	let ajax = await fetch( url, params );
+	let data = await ajax.json();
+	const room_id = data.room_id;
+	const account_id = data.account_id;
+
+	// Get the list of files for "My Chat" 
+
+	url = `https://api.chatwork.com/v2/rooms/${room_id}/files?account_id=${account_id}`;
+	ajax = await fetch( url, params );
+	data = await ajax.json();
+
+	// Return the response
+	
+	res.json({
+		err : 0,
+		msg : data
+	});
+
+});
+
+app.post('/chatwork/downloadJSON', async function(req, res) {
+
+	if(!req.session.data.chatwork_oauth) {
+		return res.json({
+			err : 1,
+			msg : "No chatwork token"
+		});
+	}
+	
+	// First we get account information
+
+	let url = "https://api.chatwork.com/v2/me";
+	const params = {
+		method : "GET",
+		headers : {
+			'Authorization' : `Bearer ${req.session.data.chatwork_oauth.access_token}`
+		}
+	}
+
+	let ajax = await fetch( url, params );
+	let data = await ajax.json();
+	const room_id = data.room_id;
+	const account_id = data.account_id;
+
+	// Get the list of files for "My Chat" 
+
+	url = `https://api.chatwork.com/v2/rooms/${room_id}/files?account_id=${account_id}`;
+	ajax = await fetch( url, params );
+	const files = await ajax.json();
+
+	console.log( files );
+
+	const queue = files.filter( elem => {
+		return elem.filename.indexOf('.json') !== -1;
+	});
+
+	if(!queue.length) {
+		return res.json({
+			err : 0,
+			msg : "No JSON Data Found is 'My Chat' Room"
+		});
+	}
+
+	// Download the most recent JSON file
+
+	const reqFile = queue.pop();
+	const file_id = reqFile.file_id;
+	url = `https://api.chatwork.com/v2/rooms/${room_id}/files/${file_id}?create_download_url=1`;
+	ajax = await fetch( url, params );
+	const file = await ajax.json();
+
+	ajax = await fetch( file.download_url );
+	data = await ajax.text();
+	
+	try {
+		let o = JSON.parse( data );
+		data = o;
+	} catch(err) {
+		// Ignore error
+	}
+	
+	// Return the response
+	
+	res.json({
+		err : typeof o === "object" ? 0 : 1,
 		msg : data
 	});
 

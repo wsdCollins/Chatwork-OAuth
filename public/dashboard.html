@@ -36,7 +36,7 @@
 	<body>
 		
 <header class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0 shadow">
-	<a class="navbar-brand col-md-3 col-lg-2 me-0 px-3" href="#">Example App</a>
+	<a class="navbar-brand col-md-3 col-lg-2 me-0 px-3" href="#">OAuth Playground</a>
 	<button class="navbar-toggler position-absolute d-md-none collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle navigation">
 		<span class="navbar-toggler-icon"></span>
 	</button>
@@ -60,30 +60,6 @@
 						</a>
 					</li>
 					<li class="nav-item">
-						<a class="nav-link" href="#">
-							<span data-feather="file"></span>
-							Orders
-						</a>
-					</li>
-					<li class="nav-item">
-						<a class="nav-link" href="#">
-							<span data-feather="shopping-cart"></span>
-							Products
-						</a>
-					</li>
-					<li class="nav-item">
-						<a class="nav-link" href="#">
-							<span data-feather="users"></span>
-							Customers
-						</a>
-					</li>
-					<li class="nav-item">
-						<a class="nav-link" href="#">
-							<span data-feather="bar-chart-2"></span>
-							Reports
-						</a>
-					</li>
-					<li class="nav-item">
 						<a class="nav-link active" href="#">
 							<span data-feather="layers"></span>
 							Integrations
@@ -102,24 +78,6 @@
 						<a class="nav-link" href="#">
 							<span data-feather="file-text"></span>
 							Current month
-						</a>
-					</li>
-					<li class="nav-item">
-						<a class="nav-link" href="#">
-							<span data-feather="file-text"></span>
-							Last quarter
-						</a>
-					</li>
-					<li class="nav-item">
-						<a class="nav-link" href="#">
-							<span data-feather="file-text"></span>
-							Social engagement
-						</a>
-					</li>
-					<li class="nav-item">
-						<a class="nav-link" href="#">
-							<span data-feather="file-text"></span>
-							Year-end sale
 						</a>
 					</li>
 				</ul>
@@ -234,6 +192,20 @@
 
 		</div>
 
+		<div class="row">
+
+		<div class="col-2">
+		<button id="Dashboard.chatwork.refreshToken" type="button" class="w-100 btn btn-primary">Refresh Token</button>
+		</div>
+
+		<div class="col-2">
+		<button id="Dashboard.chatwork.revokeAccess" type="button" class="w-100 btn btn-primary">Revoke Access</button>
+		</div>
+
+		</div>
+		
+		<div class="row">
+
 		</main>
 	</div>
 </div>
@@ -244,6 +216,7 @@
 
 		<script src="https://cdn.jsdelivr.net/npm/feather-icons@4.28.0/dist/feather.min.js" integrity="sha384-uO3SXW5IuS1ZpFPKugNNWqTZRRglnUJK6UAZ/gxOX80nxEkN9NcGZTftn6RzhGWE" crossorigin="anonymous"></script>
 
-		<script src="js/oauth.js"></script>
+		<script src="js/dashboard.js"></script>
+
 	</body>
 </html>
