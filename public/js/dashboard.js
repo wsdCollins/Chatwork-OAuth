@@ -13,6 +13,7 @@ const Dashboard = (function() {
 			getFiles : document.getElementById('Dashboard.chatwork.getFiles'),
 			downloadFile : document.getElementById('Dashboard.chatwork.downloadFile'),
 			uploadFile : document.getElementById('Dashboard.chatwork.uploadFile'),
+			fileInput : document.getElementById('Dashboard.chatwork.fileInput'),
 			refreshToken : document.getElementById('Dashboard.chatwork.refreshToken'),
 			revokeAccess : document.getElementById('Dashboard.chatwork.revokeAccess')
 		}
@@ -24,7 +25,8 @@ const Dashboard = (function() {
 		handleGetFilesClick : evt_handleGetFilesClick.bind( this ),
 		handleDownloadClick : evt_handleDownloadClick.bind( this ),
 		handleUploadClick : evt_handleUploadClick.bind( this ),
-		handleRefreshClick : evt_handleRefreshClick.bind( this )
+		handleRefreshClick : evt_handleRefreshClick.bind( this ),
+		handleFileChange : evt_handleFileChange.bind( this )
 	}
 
 	this.API = {
@@ -44,8 +46,10 @@ const Dashboard = (function() {
 		this.DOM.chatwork.getRooms.addEventListener('click', this.EVT.handleGetRoomsClick);
 		this.DOM.chatwork.getFiles.addEventListener('click', this.EVT.handleGetFilesClick);
 		this.DOM.chatwork.downloadFile.addEventListener('click', this.EVT.handleDownloadClick);
-		
+		this.DOM.chatwork.uploadFile.addEventListener('click', this.EVT.handleUploadClick);
 		this.DOM.chatwork.refreshToken.addEventListener('click', this.EVT.handleRefreshClick);
+
+		this.DOM.chatwork.fileInput.addEventListener('change', this.EVT.handleFileChange);
 
 	}
 
@@ -170,7 +174,45 @@ const Dashboard = (function() {
 
 	}
 
-	async function evt_handleUploadClick() {
+	function evt_handleUploadClick() {
+
+		this.DOM.chatwork.fileInput.click();
+
+	}
+
+	function evt_handleFileChange( evt ) {
+	
+		if( !evt.target.files || !evt.target.files.length ) {
+			return 0;
+		}
+		
+		const file = evt.target.files[0];
+		console.log( file );
+		const reader = new FileReader();
+
+		reader.onload = async () => {
+			
+			const text = reader.result;
+			const body = {
+				name : file.name,
+				content : text
+			}
+
+			const url = "/chatwork/uploadJSON";
+			const params = {
+				method : 'POST',
+				headers : {
+					'Content-Type' : 'applicaiton/json'
+				},
+				body : JSON.stringify ( body )
+			}
+
+			const ajax = await fetch( url, params );
+			const data = await ajax.json();
+
+		}
+
+		reader.readAsText( file );
 
 	}
 
