@@ -8,7 +8,7 @@ const Dashboard = (function() {
 		},
 		chatwork : {
 			pre : document.getElementById('Dashboard.chatwork.pre'),
-			call : document.getElementById('Dashboard.chatwork.call'),
+			functionName : document.getElementById('Dashboard.chatwork.functionName'),
 
 			getInfo : document.getElementById('Dashboard.chatwork.getInfo'),
 			getRooms : document.getElementById('Dashboard.chatwork.getRooms'),
@@ -159,6 +159,8 @@ const Dashboard = (function() {
 
 		const ajax = await fetch( url, params );
 		const data = await ajax.json();
+
+		this.DOM.chatwork.functionName.textContent = "Get My Information";
 		this.DOM.chatwork.pre.textContent = JSON.stringify( data.msg, null, 4);
 
 	}
@@ -175,6 +177,8 @@ const Dashboard = (function() {
 
 		const ajax = await fetch( url, params );
 		const data = await ajax.json();
+		
+		this.DOM.chatwork.functionName.textContent = "Get Rooms List";
 		this.DOM.chatwork.pre.textContent = JSON.stringify( data.msg, null, 4);
 
 	}
@@ -191,6 +195,8 @@ const Dashboard = (function() {
 
 		const ajax = await fetch( url, params );
 		const data = await ajax.json();
+		
+		this.DOM.chatwork.functionName.textContent = "List Files";
 		this.DOM.chatwork.pre.textContent = JSON.stringify( data.msg, null, 4);
 
 	}
@@ -208,6 +214,7 @@ const Dashboard = (function() {
 		const ajax = await fetch( url, params );
 		const data = await ajax.json();
 
+		this.DOM.chatwork.functionName.textContent = "Download JSON";
 		if( !data.err ) {
 			this.DOM.chatwork.pre.textContent = JSON.stringify( data.msg, null, 4);
 		} else {
@@ -228,6 +235,8 @@ const Dashboard = (function() {
 
 		const ajax = await fetch( url, params );
 		const data = await ajax.json();
+
+		this.DOM.chatwork.functionName.textContent = "Refresh Token";
 		this.DOM.chatwork.pre.textContent = JSON.stringify( data.msg, null, 4);
 
 	}
@@ -267,6 +276,8 @@ const Dashboard = (function() {
 
 			const ajax = await fetch( url, params );
 			const data = await ajax.json();
+			
+			this.DOM.chatwork.functionName.textContent = "Upload JSON";
 			this.DOM.chatwork.pre.textContent = JSON.stringify( data.msg, null, 4);
 
 		}
@@ -294,6 +305,7 @@ const Dashboard = (function() {
 		const data = await ajax.json();
 		this.MEM.session = data;
 
+		this.DOM.chatwork.functionName.textContent = "Revoke Access";
 		this.DOM.chatwork.pre.textContent = JSON.stringify( data.msg, null, 4);
 		this.API.renderDisconnected();
 
