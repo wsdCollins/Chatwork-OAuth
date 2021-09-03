@@ -124,7 +124,7 @@
 							<li>Read Virtual Account</li>
 							<li>Create Virtual Account</li>
 						</ul>
-						<button type="button" class="w-100 btn btn-lg btn-outline-primary">Connect</button>
+						<button type="button" class="w-100 btn btn-lg btn-outline-primary disabled" disabled="disabled">Not Available</button>
 					</div>
 				</div>
 			</div>
@@ -140,7 +140,7 @@
 							<li>Allow Meta</li>
 							<li>Allow Create Folders</li>
 						</ul>
-						<button type="button" class="w-100 btn btn-lg btn-outline-primary">Contact us</button>
+						<button type="button" class="w-100 btn btn-lg btn-outline-primary disabled" disabled="disabled">Not Available</button>
 					</div>
 				</div>
 			</div>
@@ -162,7 +162,7 @@
 
 		<h3>Chatwork OAuth Calls</h3>
 
-		<div class="row">
+		<div class="row pt-2">
 
 		<div class="col-2">
 		<button id="Dashboard.chatwork.getInfo" type="button" class="w-100 btn btn-primary">Get My Information</button>
@@ -188,14 +188,8 @@
 		</div>
 
 		</div>
-		
-		<div class="row">
 
-		<pre id="Dashboard.chatwork.pre" class="w-100 border rounded my-4 py-4"></pre>
-
-		</div>
-
-		<div class="row">
+		<div class="row py-4">
 
 		<div class="col-2">
 		<button id="Dashboard.chatwork.refreshToken" type="button" class="w-100 btn btn-primary">Refresh Token</button>
@@ -208,6 +202,17 @@
 		</div>
 		
 		<div class="row">
+		
+		<div class="row">
+
+		<h4>
+			Response Content: 
+			<span class='muted' id='Dashboard.chatwork.call'></span> 
+		</h4>
+
+		<pre id="Dashboard.chatwork.pre" class="w-100 border rounded my-4 py-4"></pre>
+
+		</div>
 
 		</main>
 	</div>

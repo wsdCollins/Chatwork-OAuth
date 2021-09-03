@@ -8,6 +8,8 @@ const Dashboard = (function() {
 		},
 		chatwork : {
 			pre : document.getElementById('Dashboard.chatwork.pre'),
+			call : document.getElementById('Dashboard.chatwork.call'),
+
 			getInfo : document.getElementById('Dashboard.chatwork.getInfo'),
 			getRooms : document.getElementById('Dashboard.chatwork.getRooms'),
 			getFiles : document.getElementById('Dashboard.chatwork.getFiles'),
@@ -26,12 +28,14 @@ const Dashboard = (function() {
 		handleDownloadClick : evt_handleDownloadClick.bind( this ),
 		handleUploadClick : evt_handleUploadClick.bind( this ),
 		handleRefreshClick : evt_handleRefreshClick.bind( this ),
-		handleFileChange : evt_handleFileChange.bind( this )
+		handleFileChange : evt_handleFileChange.bind( this ),
+		handleRevokeClick : evt_handleRevokeClick.bind( this )
 	}
 
 	this.API = {
 		getSessionData : api_getSessionData.bind(this),
-		setChatworkLink : api_setChatworkLink.bind(this)
+		renderConnected : api_renderConnected.bind(this),
+		renderDisconnected : api_renderDisconnected.bind(this)
 	}
 
 	init.apply( this );
@@ -48,23 +52,45 @@ const Dashboard = (function() {
 		this.DOM.chatwork.downloadFile.addEventListener('click', this.EVT.handleDownloadClick);
 		this.DOM.chatwork.uploadFile.addEventListener('click', this.EVT.handleUploadClick);
 		this.DOM.chatwork.refreshToken.addEventListener('click', this.EVT.handleRefreshClick);
+		this.DOM.chatwork.revokeAccess.addEventListener('click', this.EVT.handleRevokeClick);
 
 		this.DOM.chatwork.fileInput.addEventListener('change', this.EVT.handleFileChange);
 
 	}
 
-	async function api_getSessionData() {
+	function api_renderConnected() {
 
-		const req = await fetch( '/session' );
-		const res = await req.json();
+		console.log( "render connected!!");
+		
+		// Connect Button
 
-		console.log( res );
-		this.MEM.session = res;
-		this.API.setChatworkLink();
+		this.DOM.oauth.chatwork.setAttribute('class', 'w-100 btn btn-lg btn-primary disabled');
+		this.DOM.oauth.chatwork.setAttribute('disabled', 'disabled');
+		this.DOM.oauth.chatwork.textContent = "Connected";
+
+		// API Buttons
+
+		this.DOM.chatwork.getInfo.removeAttribute( 'disabled' );
+		this.DOM.chatwork.getRooms.removeAttribute( 'disabled' );
+		this.DOM.chatwork.getFiles.removeAttribute( 'disabled' );
+		this.DOM.chatwork.downloadFile.removeAttribute( 'disabled' );
+		this.DOM.chatwork.uploadFile.removeAttribute( 'disabled' );
+		this.DOM.chatwork.refreshToken.removeAttribute( 'disabled' );
+		this.DOM.chatwork.revokeAccess.removeAttribute( 'disabled' );
+
+		this.DOM.chatwork.getInfo.classList.remove( 'disabled' );
+		this.DOM.chatwork.getRooms.classList.remove( 'disabled' );
+		this.DOM.chatwork.getFiles.classList.remove( 'disabled' );
+		this.DOM.chatwork.downloadFile.classList.remove( 'disabled' );
+		this.DOM.chatwork.uploadFile.classList.remove( 'disabled' );
+		this.DOM.chatwork.refreshToken.classList.remove( 'disabled' );
+		this.DOM.chatwork.revokeAccess.classList.remove( 'disabled' );
 
 	}
 
-	function api_setChatworkLink() {
+	function api_renderDisconnected() {
+
+		// Set State for Connect Button
 
 		const state = Date.now();
 
@@ -78,11 +104,43 @@ const Dashboard = (function() {
 		].join('');
 
 		this.DOM.oauth.chatwork.setAttribute('href', url);
+		
+		// Connect Button
 
+		this.DOM.oauth.chatwork.setAttribute('class', 'w-100 btn btn-lg btn-outline-primary');
+		this.DOM.oauth.chatwork.removeAttribute('disabled');
+		this.DOM.oauth.chatwork.textContent = "Connect";
+
+		// API Buttons
+		
+		this.DOM.chatwork.getInfo.setAttribute( 'disabled', 'disabled' );
+		this.DOM.chatwork.getRooms.setAttribute( 'disabled', 'disabled' );
+		this.DOM.chatwork.getFiles.setAttribute( 'disabled', 'disabled' );
+		this.DOM.chatwork.downloadFile.setAttribute( 'disabled', 'disabled' );
+		this.DOM.chatwork.uploadFile.setAttribute( 'disabled', 'disabled' );
+		this.DOM.chatwork.refreshToken.setAttribute( 'disabled', 'disabled' );
+		this.DOM.chatwork.revokeAccess.setAttribute( 'disabled', 'disabled' );
+
+		this.DOM.chatwork.getInfo.classList.add( 'disabled' );
+		this.DOM.chatwork.getRooms.classList.add( 'disabled' );
+		this.DOM.chatwork.getFiles.classList.add( 'disabled' );
+		this.DOM.chatwork.downloadFile.classList.add( 'disabled' );
+		this.DOM.chatwork.uploadFile.classList.add( 'disabled' );
+		this.DOM.chatwork.refreshToken.classList.add( 'disabled' );
+		this.DOM.chatwork.revokeAccess.classList.add( 'disabled' );
+
+	}
+
+	async function api_getSessionData() {
+
+		const req = await fetch( '/session' );
+		const res = await req.json();
+
+		this.MEM.session = res;
 		if(this.MEM.session.chatwork_oauth) {
-			this.DOM.oauth.chatwork.setAttribute('class', 'w-100 btn btn-lg btn-primary disabled');
-			this.DOM.oauth.chatwork.setAttribute('disabled', 'disabled');
-			this.DOM.oauth.chatwork.textContent = "Connected";
+			this.API.renderConnected();
+		} else {
+			this.API.renderDisconnected();
 		}
 
 	}
@@ -95,7 +153,7 @@ const Dashboard = (function() {
 		const params = {
 			method : 'POST',
 			headers : {
-				'Content-Type' : 'applicaiton/json'
+				'Content-Type' : 'application/json'
 			}
 		}
 
@@ -111,7 +169,7 @@ const Dashboard = (function() {
 		const params = {
 			method : 'POST',
 			headers : {
-				'Content-Type' : 'applicaiton/json'
+				'Content-Type' : 'application/json'
 			}
 		}
 
@@ -127,7 +185,7 @@ const Dashboard = (function() {
 		const params = {
 			method : 'POST',
 			headers : {
-				'Content-Type' : 'applicaiton/json'
+				'Content-Type' : 'application/json'
 			}
 		}
 
@@ -143,7 +201,7 @@ const Dashboard = (function() {
 		const params = {
 			method : 'POST',
 			headers : {
-				'Content-Type' : 'applicaiton/json'
+				'Content-Type' : 'application/json'
 			}
 		}
 
@@ -164,7 +222,7 @@ const Dashboard = (function() {
 		const params = {
 			method : 'POST',
 			headers : {
-				'Content-Type' : 'applicaiton/json'
+				'Content-Type' : 'application/json'
 			}
 		}
 
@@ -214,6 +272,30 @@ const Dashboard = (function() {
 		}
 
 		reader.readAsText( file );
+
+	}
+
+	async function evt_handleRevokeClick() {
+
+		const bool = confirm( "Are you sure you want to remove access for Chatwork?" );
+		if( !bool ) {
+			return;
+		}
+
+		const url = "/chatwork/revoke";
+		const params = {
+			method : 'POST',
+			headers : {
+				'Content-Type' : 'application/json'
+			}
+		}
+
+		const ajax = await fetch( url, params );
+		const data = await ajax.json();
+		this.MEM.session = data;
+
+		this.DOM.chatwork.pre.textContent = JSON.stringify( data.msg, null, 4);
+		this.API.renderDisconnected();
 
 	}
 

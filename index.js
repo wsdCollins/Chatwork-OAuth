@@ -44,7 +44,7 @@ app.use(session({
 app.get('/oauth/chatwork', async function(req, res) {
 
 	if( req.query.error ) {
-		return res.redirect('/dashboard.html?result=no');
+		return res.redirect('/dashboard.html');
 	}
 
 	// Create the Authentication body
@@ -119,9 +119,8 @@ app.get('/oauth/chatwork', async function(req, res) {
 	];
 
 	await db.query( insert_sql, insert_args );
-
 	req.session.data.chatwork_oauth = json;
-	return res.redirect('/dashboard.html?result=yes');
+	res.redirect('/dashboard.html');
 
 });
 
@@ -142,6 +141,38 @@ app.get('/logout', async function(req, res) {
 /**
  * Chatwork Callbacks
  **/
+
+app.post('/chatwork/revoke', async function(req, res) {
+
+	if(!req.session.data.chatwork_oauth) {
+		return res.json({
+			err : 1,
+			msg : "No chatwork token"
+		});
+	}
+
+	const update_sql = `
+		UPDATE
+			dat_users
+		SET
+			chatwork_oauth = NULL
+		WHERE
+			user_uuid = ?
+	`;
+
+	const update_args = [
+		req.session.data.user_uuid
+	]
+
+	await db.query( update_sql, update_args );
+	req.session.data.chatwork_oauth = null;
+
+	res.json({
+		err : 0,
+		msg : req.session.data
+	});
+
+});
 
 app.post('/chatwork/refresh', async function(req, res) {
 
@@ -224,6 +255,11 @@ app.post('/chatwork/refresh', async function(req, res) {
 	];
 
 	await db.query( insert_sql, insert_args );
+
+	res.json({
+		err : 0,
+		msg : json
+	});
 	
 });
 
@@ -382,7 +418,7 @@ app.post('/chatwork/downloadJSON', async function(req, res) {
 	// Return the response
 	
 	res.json({
-		err : typeof o === "object" ? 0 : 1,
+		err : typeof data === "object" ? 0 : 1,
 		msg : data
 	});
 
