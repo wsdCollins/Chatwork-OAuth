@@ -120,6 +120,12 @@ app.get('/oauth/chatwork', async function(req, res) {
 
 	await db.query( insert_sql, insert_args );
 	req.session.data.chatwork_oauth = json;
+
+	const now = Date.now();
+	const expires_in_mil = json.expires_in * 1000;
+	const expires_at = now + expires_in_mil - 3000;
+	req.session.data.chatwork_oauth.expires_at = expires_at;
+
 	res.redirect('/dashboard.html');
 
 });
@@ -174,14 +180,7 @@ app.post('/chatwork/revoke', async function(req, res) {
 
 });
 
-app.post('/chatwork/refresh', async function(req, res) {
-
-	if(!req.session.data.chatwork_oauth) {
-		return res.json({
-			err : 1,
-			msg : "No chatwork token"
-		});
-	}
+async function refreshToken( req ) {
 
 	// Create the Authentication body
 
@@ -209,7 +208,13 @@ app.post('/chatwork/refresh', async function(req, res) {
 
 	const ajax = await fetch( url, params );
 	const json = await ajax.json();
+
 	req.session.data.chatwork_oauth = json;
+
+	const now = Date.now();
+	const expires_in_mil = json.expires_in * 1000;
+	const expires_at = now + expires_in_mil - 3000;
+	req.session.data.chatwork_oauth.expires_at = expires_at;
 
 	const update_sql = `
 		UPDATE
@@ -256,9 +261,22 @@ app.post('/chatwork/refresh', async function(req, res) {
 
 	await db.query( insert_sql, insert_args );
 
+}
+
+app.post('/chatwork/refresh', async function(req, res) {
+
+	if(!req.session.data.chatwork_oauth) {
+		return res.json({
+			err : 1,
+			msg : "No chatwork token"
+		});
+	}
+
+	await refreshToken( req );
+
 	res.json({
 		err : 0,
-		msg : json
+		msg : req.session.data.chatwork_oauth
 	});
 	
 });
@@ -272,6 +290,12 @@ app.post('/chatwork/info', async function(req, res) {
 		});
 	}
 	
+	// Check for expired (or soon to expire token)
+	if(Date.now() > req.session.data.chatwork_oauth.expires_at) {
+		console.log(" Attempting to do refresh!!! ");
+		await refreshToken( req );
+	}
+
 	const url = "https://api.chatwork.com/v2/me";
 	const params = {
 		method : "GET",
@@ -299,6 +323,12 @@ app.post('/chatwork/rooms', async function(req, res) {
 		});
 	}
 	
+	// Check for expired (or soon to expire token)
+	if(Date.now() > req.session.data.chatwork_oauth.expires_at) {
+		console.log(" Attempting to do refresh!!! ");
+		await refreshToken( req );
+	}
+	
 	const url = "https://api.chatwork.com/v2/rooms";
 	const params = {
 		method : "GET",
@@ -324,6 +354,12 @@ app.post('/chatwork/listFiles', async function(req, res) {
 			err : 1,
 			msg : "No chatwork token"
 		});
+	}
+	
+	// Check for expired (or soon to expire token)
+	if(Date.now() > req.session.data.chatwork_oauth.expires_at) {
+		console.log(" Attempting to do refresh!!! ");
+		await refreshToken( req );
 	}
 	
 	// First we get account information
@@ -363,6 +399,12 @@ app.post('/chatwork/downloadJSON', async function(req, res) {
 			err : 1,
 			msg : "No chatwork token"
 		});
+	}
+	
+	// Check for expired (or soon to expire token)
+	if(Date.now() > req.session.data.chatwork_oauth.expires_at) {
+		console.log(" Attempting to do refresh!!! ");
+		await refreshToken( req );
 	}
 	
 	// First we get account information
@@ -431,6 +473,12 @@ app.post('/chatwork/uploadJSON', async function(req, res) {
 			err : 1,
 			msg : "No chatwork token"
 		});
+	}
+	
+	// Check for expired (or soon to expire token)
+	if(Date.now() > req.session.data.chatwork_oauth.expires_at) {
+		console.log(" Attempting to do refresh!!! ");
+		await refreshToken( req );
 	}
 	
 	// First we get account information
@@ -627,10 +675,7 @@ app.post('/login', async function(req, res) {
 
 		}
 
-
-
 	}
-
 
 });
 
